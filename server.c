@@ -12,8 +12,9 @@
 
 // Define book data structure
 struct BookNode {
-    char title[100];
-    char content[1000];
+    char title[200];
+    // changed this array to a pointer for dynamic allocation
+    char* content;
     struct BookNode* next;
 };
 
@@ -26,6 +27,8 @@ int client_count = 0;
 void add_book_node(char* title, char* content, int client_id) {
     struct BookNode* new_node = (struct BookNode*)malloc(sizeof(struct BookNode));
     strcpy(new_node->title, title);
+    // dynamic allocation
+    new_node->content = (char*)malloc(strlen(content) + 1);
     strcpy(new_node->content, content);
     new_node->next = NULL;
 
@@ -57,7 +60,7 @@ void print_book(int client_id) {
     struct BookNode* current = book_heads[client_id];
     FILE* file;
     char filename[50];
-    sprintf(filename, "book_0%d.txt", client_id);
+    sprintf(filename, "book_%02d.txt", client_id);
 
     if ((file = fopen(filename, "w")) == NULL) {
         perror("Error opening file");
