@@ -7,7 +7,6 @@
 #include <sys/socket.h>
 
 // Define server settings
-#define PORT 0
 #define MAX_CLIENTS 100
 
 // Define book data structure
@@ -22,6 +21,8 @@ struct BookNode {
 struct BookNode* shared_list = NULL;
 struct BookNode* book_heads[MAX_CLIENTS];
 int client_count = 0;
+
+char* search_pattern = NULL;
 
 // Function to add a book node to the shared list
 void add_book_node(char* title, char* content, int client_id) {
@@ -118,8 +119,6 @@ void* handle_client(void* arg) {
     return NULL;
 }
 
-char* search_pattern = "happy"; // Change this to your desired pattern
-
 void* analyze(void* arg) {
     while (1) {
         sleep(5); // Adjust the interval as needed (5 seconds in this example)
@@ -141,7 +140,17 @@ void* analyze(void* arg) {
     return NULL;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+
+    if (argc != 5 || strcmp(argv[1], "-l") != 0 || strcmp(argv[3], "-p") != 0) {
+        printf("Usage: %s -l <port> -p <search_pattern>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    int listen_port = atoi(argv[2]);
+    search_pattern = argv[4];
+
+
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
@@ -154,7 +163,7 @@ int main() {
     }
 
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
+    server_addr.sin_port = htons(listen_port);
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // Bind socket
@@ -171,7 +180,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    printf("Server listening on port %d...\n", PORT);
+    printf("Server listening on port %d...\n", listen_port);
 /**/
     struct sockaddr_in temp_addr;
     socklen_t temp_len = sizeof(temp_addr);
