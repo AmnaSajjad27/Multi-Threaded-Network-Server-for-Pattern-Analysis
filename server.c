@@ -1,189 +1,195 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// For locks
 #include <pthread.h>
 #include <unistd.h>
-
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-// Define ports
+// Define server settings
 #define PORT 12345
-#define MAX_BUFFER_SIZE 1024
+#define MAX_CLIENTS 10
 
-// Linked List Structure
-typedef struct Node
-{
-    char data[MAX_BUFFER_SIZE];
-    struct Node* next;
-    struct Node* book_next;
-    struct Node* next_frequent_search;
-}Node;
+// Define book data structure
+struct BookNode {
+    char title[100];
+    char content[1000];
+    struct BookNode* next;
+};
 
-// Shared List Structure
-typedef struct Shared_list
-{
-    Node* head;
-    Node* tail;
-    pthread_mutex_t lock;
-}Shared_list;
+// Shared data structure (list) with book pointers
+struct BookNode* shared_list = NULL;
+struct BookNode* book_heads[MAX_CLIENTS];
 
-// Initaliseing a Shared list object
-Shared_list sharedlist = {NULL, NULL, PTHREAD_MUTEX_INITIALIZER};
+// Function to add a book node to the shared list
+void add_book_node(char* title, char* content, int client_id) {
+    struct BookNode* new_node = (struct BookNode*)malloc(sizeof(struct BookNode));
+    strcpy(new_node->title, title);
+    strcpy(new_node->content, content);
+    new_node->next = NULL;
 
-// Search pattern structure
-typedef struct search_Pattern
-{
-    char pattern[MAX_BUFFER_SIZE];
-    int frequency;
-    pthread_t output_thread;
-}search_Pattern;
-
-// Initalise a search pattern 
-search_Pattern searchPattern = {"", 0, 0};
-
-// Add node to sharedlist
-void add_Node(const char* data)
-{
-    // Allocate memory for new data
-    Node* newNode = (Node*)malloc(sizeof(Node));
-    // strncpy(char *dest, const char *src, size_t n)
-    strncpy(newNode->data, data, MAX_BUFFER_SIZE);
-    newNode->next = NULL;
-    newNode->book_next = NULL;
-    newNode->next_frequent_search = NULL;
-    // Lock a mutex and acquire a lock
-    pthread_mutex_lock(&sharedlist.lock);
-    // If list is currently empty 
-    if (sharedlist.head == NULL)
-    {
-        // Set the first node as newNode
-        sharedlist.head = newNode;
-        // Set the tail as its the only node
-        sharedlist.tail = newNode;
+    if (shared_list == NULL) {
+        shared_list = new_node;
+    } else {
+        struct BookNode* current = shared_list;
+        while (current->next != NULL) {
+            current = current->next;
+        }
+        current->next = new_node;
     }
-    // List is not empty
-    else
-    {
-        // Set the next pointer of current Node to newNode
-        sharedlist.head->next = newNode;
-        // Update the tail pointer to point to newNode, newNode is the last node in the list
-        sharedlist.tail = newNode;
+
+    if (book_heads[client_id] == NULL) {
+        book_heads[client_id] = new_node;
+    } else {
+        struct BookNode* current = book_heads[client_id];
+        while (current->next != NULL) {
+            current = current->next;
+        }
+        current->next = new_node;
     }
-    // Release the lock, done editing the list
-    pthread_mutex_unlock(&sharedlist.lock);
 }
 
 // Function to print a book
-void print_Book(Node* book_head)
-{
-    // pointer current points to the first node in the Linked list
-    Node* current = book_head;
-    // Iteriate till there are no more nodes in the list
-    while(current != NULL)
-    {
-        // Print the line from the book
-        printf("%s", current->data);
-        // Update pointer to the next 
-        current = current->book_next;
+void print_book(int client_id) {
+    struct BookNode* current = book_heads[client_id];
+    while (current != NULL) {
+        printf("%s\n", current->title);
+        current = current->next;
     }
 }
 
-// Function to handle client communication
-// Called in a seprate thread for each connected client
-void* Handler_Client(void* client_socket)
-{
-    // de-refrence the argument, client_socket is a pointer to an integer
-    int client = *((int*)client_socket);
-    // The following two store the data read from the client and the number of bytes read from the client
-    char buffer[MAX_BUFFER_SIZE];
-    int bytes_read;
+// Function to handle each client connection
+void* handle_client(void* arg) {
+    int client_id = *((int*)arg);
+    free(arg);
 
-    // reading client data using recv till there is no more data to read i.e. buffer more than 0
-    // recv(client_socket_fd, buffer_to_store_data, max_size_buffer, flags)
-    while ((bytes_read = recv(client, buffer, sizeof(buffer), 0)) > 0)
-    {
-        // This ensures the string is null terminated
-        buffer[bytes_read] = '\0';
-        // Add data recieved to shared list using function add_Node
-        add_Node(buffer);
-        // For debugging, print data has been added 
-        printf("%s added\n", buffer);
+    // Add a book header for this client
+    book_heads[client_id] = NULL;
+
+    char buffer[1100];
+    memset(buffer, 0, sizeof(buffer));
+
+    while (1) {
+        int bytes_received = recv(client_id, buffer, sizeof(buffer), 0);
+        if (bytes_received <= 0) {
+            break;
+        }
+
+        // Extract book title and content from the received data
+        char title[100], content[1000];
+        sscanf(buffer, "%99[^\n]\n%999[^\n]", title, content);
+
+        add_book_node(title, content, client_id);
+
+        printf("Received data from client %d: %s\n", client_id, title);
+        memset(buffer, 0, sizeof(buffer));
     }
-    // Terminate the connection
-    close(client);
 
-    // write book to file, lock the mutex
-    pthread_mutex_lock(&sharedlist.lock);
-    // Assumming head is at the start of the book
-    Node* book_head = sharedlist.head;
-    sharedlist.head = NULL;
-    // release the lock on mutex
-    pthread_mutex_unlock(&sharedlist.lock);
+    // Print the received book
+    print_book(client_id);
 
-    // Number of books processed 
-    static int book_counter = 0;
-    char filename[20];
-    // print and increment book counter
-    book_counter++;
-    sprintf(filename, "Book_%02d.txt", book_counter);
-
-    // open file for writting 
-    FILE* file = fopen(filename, "w");
-    if (file != NULL)
-    {
-        print_Book(book_head);
-        fclose(file);
-    }
-    // Free Memory allocated for client socket file descriptor 
-    free(client_socket);
+    close(client_id);
     return NULL;
 }
 
-// Function to analyse pattern
-void* analyse_Thread(void* arg)
-{
-    int analyse_interval = *((int*)arg);
-    while (1)
-    {
-        sleep(analyse_interval);
-        pthread_mutex_lock(&sharedlist.lock);
-        // iterate through shared list and compute frequency
-        Node* current = sharedlist.head;
+char* search_pattern = "happy"; // Change this to your desired pattern
 
-        while(current != NULL)
-        {
-            if (strstr(current->data, searchPattern.pattern) != NULL)
-            {
-                searchPattern.frequency++;
+void* analyze(void* arg) {
+    while (1) {
+        sleep(5); // Adjust the interval as needed (5 seconds in this example)
+
+        // Count occurrences of search_pattern
+        int pattern_count = 0;
+        struct BookNode* current = shared_list;
+        while (current != NULL) {
+            if (strstr(current->content, search_pattern) != NULL) {
+                pattern_count++;
             }
             current = current->next;
         }
-        pthread_mutex_unlock(&sharedlist.lock);
 
-        if (pthread_equal(pthread_self(), searchPattern.output_thread))
-        {
-            printf("Most frequent occurances of '%s' : %d\n", searchPattern.pattern, searchPattern.frequency);
-            // reset variables to be used again
-            searchPattern.frequency = 0;
-            searchPattern.output_thread = 0;
-        }
+        // Print result
+        printf("Occurrences of '%s': %d\n", search_pattern, pattern_count);
     }
+
     return NULL;
 }
 
 int main() {
-    int serverSocket, clientSocket;
-    struct sockaddr_in serverAddr, clientAddr;
-    socklen_t addrSize = sizeof(struct sockaddr_in);
-    pthread_t thread;
+    int server_fd, client_fd;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_len = sizeof(client_addr);
 
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    // Create socket
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == -1) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
 
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(PORT);
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    // Bind socket
+    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+        perror("Bind failed");
+        close(server_fd);
+        exit(EXIT_FAILURE);
+    }
+
+    // Listen for incoming connections
+    if (listen(server_fd, MAX_CLIENTS) == -1) {
+        perror("Listen failed");
+        close(server_fd);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Server listening on port %d...\n", PORT);
+
+    // Initialize book_heads array
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        book_heads[i] = NULL;
+    }
+
+    while (1) {
+        client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
+        if (client_fd == -1) {
+            perror("Accept failed");
+            continue;
+        }
+
+        // Create a thread to handle the client
+        pthread_t client_thread;
+        int* client_id = malloc(sizeof(int));
+        *client_id = client_fd;
+
+        if (pthread_create(&client_thread, NULL, handle_client, (void*)client_id) != 0) {
+            perror("Thread creation failed");
+            close(client_fd);
+            free(client_id);
+            continue;
+        }
+
+        pthread_detach(client_thread);
+    }
+
+    // Create analysis threads
+    pthread_t analysis_thread1, analysis_thread2;
+    pthread_create(&analysis_thread1, NULL, analyze, NULL);
+    pthread_create(&analysis_thread2, NULL, analyze, NULL);
+
+    // ... (rest of the previous code remains the same)
+
+    while (1) {
+        client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
+        // ... (same as before)
+    }
+
+    close(server_fd);
+    return 0;
+
+
+    close(server_fd);
+    return 0;
 }
