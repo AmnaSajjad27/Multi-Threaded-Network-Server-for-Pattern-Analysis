@@ -140,20 +140,22 @@ void* analyze(void* arg) {
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 3)
-    {
-        printf("Usage: %s -l <port>\n", argv[0]);
-        return 1;
-    }
+    int opt;
+    int port;
 
-    if (strcmp(argv[1], "-l") != 0) {
-    printf("Invalid option: %s\n", argv[1]);
-    return 1;
-    }
+    while ((opt = getopt(argc, argv, "l:")) != -1) {
+        switch (opt) {
+            case 'l':
+                port = atoi(optarg);
+                printf("Port number: %d\n", port);
+                break;
 
-    int port = atoi(argv[2]);
+            default:
+                fprintf(stderr, "Usage: %s -l <port>\n", argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
     
-
 
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
@@ -235,8 +237,6 @@ int main(int argc, char *argv[]) {
     while (1) {
         client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
     }
-
-    printf("Port number: %d\n", port);
 
     close(server_fd);
     return 0;
