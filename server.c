@@ -138,25 +138,7 @@ void* analyze(void* arg) {
     return NULL;
 }
 
-int main(int argc, char *argv[]) {
-
-    int opt;
-    int port;
-
-    while ((opt = getopt(argc, argv, "l:")) != -1) {
-        switch (opt) {
-            case 'l':
-                port = atoi(optarg);
-                printf("Port number: %d\n", port);
-                break;
-
-            default:
-                fprintf(stderr, "Usage: %s -l <port>\n", argv[0]);
-                exit(EXIT_FAILURE);
-        }
-    }
-    
-
+int main() {
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
