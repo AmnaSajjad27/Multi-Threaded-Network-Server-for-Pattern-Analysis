@@ -7,7 +7,6 @@
 #include <sys/socket.h>
 
 // Define server settings
-#define PORT 12345
 #define MAX_CLIENTS 100
 
 // Define book data structure
@@ -128,7 +127,7 @@ int main() {
     }
 
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
+    server_addr.sin_port = htons(0);
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // Bind socket
@@ -138,6 +137,14 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    struct sockaddr_in temp_addr;
+    socklen_t temp_len = sizeof(temp_addr);
+    getsockname(server_fd, (struct sockaddr*)&temp_addr, &temp_len);
+
+    int assigned_port = ntohs(temp_addr.sin_port);
+    printf("Server listening on dynamically assigned port: %d\n", assigned_port);
+
+
     // Listen for incoming connections
     if (listen(server_fd, MAX_CLIENTS) == -1) {
         perror("Listen failed");
@@ -145,7 +152,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    printf("Server listening on port %d...\n", PORT);
+    printf("Server listening on port %d...\n", assigned_port);
 
     // Initialize book_heads array
     for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -185,10 +192,6 @@ int main() {
         client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
         // ... (same as before)
     }
-
-    close(server_fd);
-    return 0;
-
 
     close(server_fd);
     return 0;
