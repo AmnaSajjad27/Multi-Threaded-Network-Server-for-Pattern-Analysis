@@ -20,6 +20,7 @@ struct BookNode {
 // Shared data structure (list) with book pointers
 struct BookNode* shared_list = NULL;
 struct BookNode* book_heads[MAX_CLIENTS];
+int client_count = 0;
 
 // Function to add a book node to the shared list
 void add_book_node(char* title, char* content, int client_id) {
@@ -47,6 +48,8 @@ void add_book_node(char* title, char* content, int client_id) {
         }
         current->next = new_node;
     }
+    printf("Added node for client %d: %s\n", client_id, title);
+
 }
 
 // Function to print a book
@@ -76,6 +79,8 @@ void* handle_client(void* arg) {
     int client_id = *((int*)arg);
     free(arg);
 
+    client_count++;
+
     // Add a book header for this client
     book_heads[client_id] = NULL;
 
@@ -94,7 +99,6 @@ void* handle_client(void* arg) {
 
         add_book_node(title, content, client_id);
 
-        printf("Received data from client %d: %s\n", client_id, title);
         memset(buffer, 0, sizeof(buffer));
     }
 
@@ -102,6 +106,12 @@ void* handle_client(void* arg) {
     print_book(client_id);
 
     close(client_id);
+    client_count--;
+
+    if (client_count == 0){
+        exit(0);
+    }
+
     return NULL;
 }
 
@@ -159,7 +169,20 @@ int main() {
     }
 
     printf("Server listening on port %d...\n", PORT);
+/*
+    struct sockaddr_in temp_addr;
+    socklen_t temp_len = sizeof(temp_addr);
+    getsockname(server_fd, (struct sockaddr*)&temp_addr, &temp_len);
 
+    int assigned_port = ntohs(temp_addr.sin_port);
+    printf("Server listening on dynamically assigned port: %d\n", assigned_port);
+
+    if (listen(server_fd, MAX_CLIENTS) == -1) {
+        perror("Listen failed");
+        close(server_fd);
+        exit(EXIT_FAILURE);
+    }
+*/
     // Initialize book_heads array
     for (int i = 0; i < MAX_CLIENTS; i++) {
         book_heads[i] = NULL;
@@ -192,11 +215,9 @@ int main() {
     pthread_create(&analysis_thread1, NULL, analyze, NULL);
     pthread_create(&analysis_thread2, NULL, analyze, NULL);
 
-    // ... (rest of the previous code remains the same)
-
+   
     while (1) {
         client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
-        // ... (same as before)
     }
 
     close(server_fd);
