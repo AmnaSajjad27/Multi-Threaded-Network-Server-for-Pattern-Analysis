@@ -154,6 +154,7 @@ int main(int argc, char *argv[]) {
     int port = atoi(argv[2]);
     
 
+
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
@@ -234,6 +235,8 @@ int main(int argc, char *argv[]) {
     while (1) {
         client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
     }
+
+    printf("Port number: %d\n", port);
 
     close(server_fd);
     return 0;
