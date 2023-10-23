@@ -52,10 +52,23 @@ void add_book_node(char* title, char* content, int client_id) {
 // Function to print a book
 void print_book(int client_id) {
     struct BookNode* current = book_heads[client_id];
+    FILE* file;
+    char filename[50];
+    sprintf(filename, "book_%02d.txt", client_id);
+
+    if ((file = fopen(filename, "w")) == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
     while (current != NULL) {
-        printf("%s\n", current->title);
+        fprintf(file, "%s\n", current->title);
         current = current->next;
     }
+
+    fclose(file);
+
+    printf("Wrote book for client %d to %s\n", client_id, filename);
 }
 
 // Function to handle each client connection
