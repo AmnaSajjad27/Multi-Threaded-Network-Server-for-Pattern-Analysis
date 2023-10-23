@@ -4,7 +4,7 @@ CFLAGS = -pthread -Wall
 
 # source files
 SRCS = server.c 
-EXECUTABLE = server
+EXECUTABLE = assignment3
 
 #object files 
 OBJS = $(SRCS:.c=.o)

@@ -7,7 +7,7 @@
 #include <sys/socket.h>
 
 // Define server settings
-#define PORT 12345
+#define PORT 12350
 #define MAX_CLIENTS 10
 
 // Define book data structure
