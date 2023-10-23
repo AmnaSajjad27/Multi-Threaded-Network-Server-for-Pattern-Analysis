@@ -61,7 +61,7 @@ void print_book(int client_id) {
     struct BookNode* current = book_heads[client_id];
     FILE* file;
     char filename[50];
-    sprintf(filename, "book_%02d.txt", client_id);
+    sprintf(filename, "book_%02d.txt", client_id);  // Use %02d for leading zeros
 
     if ((file = fopen(filename, "w")) == NULL) {
         perror("Error opening file");
@@ -69,7 +69,7 @@ void print_book(int client_id) {
     }
 
     while (current != NULL) {
-        fprintf(file, "%s\n", current->title);
+        fprintf(file, "%s\n%s\n", current->title, current->content);
         current = current->next;
     }
 
