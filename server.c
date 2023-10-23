@@ -138,7 +138,22 @@ void* analyze(void* arg) {
     return NULL;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+
+    if (argc != 3)
+    {
+        printf("Usage: %s -l <port>\n", argv[0]);
+        return 1;
+    }
+
+    if (strcmp(argv[1], "-l") != 0) {
+    printf("Invalid option: %s\n", argv[1]);
+    return 1;
+    }
+
+    int port = atoi(argv[2]);
+    
+
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
