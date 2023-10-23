@@ -57,7 +57,7 @@ void print_book(int client_id) {
     struct BookNode* current = book_heads[client_id];
     FILE* file;
     char filename[50];
-    sprintf(filename, "book_%03d.txt", client_id);
+    sprintf(filename, "book_0%d.txt", client_id);
 
     if ((file = fopen(filename, "w")) == NULL) {
         perror("Error opening file");
