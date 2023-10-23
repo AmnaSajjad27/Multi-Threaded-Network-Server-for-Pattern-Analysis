@@ -138,15 +138,7 @@ void* analyze(void* arg) {
     return NULL;
 }
 
-int main(int argc, char *argv[]) {
-
-    if (argc != 3 || strcmp(argv[1], "-l") != 0) {
-        fprintf(stderr, "Usage: %s -l <port>\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
-   // int port = atoi(argv[2]);
-
+int main() {
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_len = sizeof(client_addr);
@@ -176,6 +168,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    printf("Server listening on port %d...\n", PORT);
 /**/
     struct sockaddr_in temp_addr;
     socklen_t temp_len = sizeof(temp_addr);
@@ -189,16 +182,11 @@ int main(int argc, char *argv[]) {
         close(server_fd);
         exit(EXIT_FAILURE);
     }
-
-      printf("Server listening on dynamically assigned port: %d\n", assigned_port);
-
+/**/
+    // Initialize book_heads array
     for (int i = 0; i < MAX_CLIENTS; i++) {
         book_heads[i] = NULL;
     }
-
-    pthread_t analysis_thread1, analysis_thread2;
-    pthread_create(&analysis_thread1, NULL, analyze, NULL);
-    pthread_create(&analysis_thread2, NULL, analyze, NULL);
 
     while (1) {
         client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
@@ -207,6 +195,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
+        // Create a thread to handle the client
         pthread_t client_thread;
         int* client_id = malloc(sizeof(int));
         *client_id = client_fd;
@@ -219,6 +208,16 @@ int main(int argc, char *argv[]) {
         }
 
         pthread_detach(client_thread);
+    }
+
+    // Create analysis threads
+    pthread_t analysis_thread1, analysis_thread2;
+    pthread_create(&analysis_thread1, NULL, analyze, NULL);
+    pthread_create(&analysis_thread2, NULL, analyze, NULL);
+
+   
+    while (1) {
+        client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
     }
 
     close(server_fd);
