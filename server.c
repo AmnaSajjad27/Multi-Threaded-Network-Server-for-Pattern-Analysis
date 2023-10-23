@@ -169,7 +169,7 @@ int main() {
     }
 
     printf("Server listening on port %d...\n", PORT);
-/*
+/**/
     struct sockaddr_in temp_addr;
     socklen_t temp_len = sizeof(temp_addr);
     getsockname(server_fd, (struct sockaddr*)&temp_addr, &temp_len);
@@ -182,7 +182,7 @@ int main() {
         close(server_fd);
         exit(EXIT_FAILURE);
     }
-*/
+/**/
     // Initialize book_heads array
     for (int i = 0; i < MAX_CLIENTS; i++) {
         book_heads[i] = NULL;
