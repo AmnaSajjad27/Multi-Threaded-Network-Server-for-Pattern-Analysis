@@ -173,46 +173,17 @@ void* analyse_Thread(void* arg)
     return NULL;
 }
 
-// Main function - Generated using AI
 int main() {
     int serverSocket, clientSocket;
     struct sockaddr_in serverAddr, clientAddr;
     socklen_t addrSize = sizeof(struct sockaddr_in);
     pthread_t thread;
 
-    // Create socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(PORT);
     serverAddr.sin_addr.s_addr = INADDR_ANY;
 
-    // Bind socket
     bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
-
-    // Listen for incoming connections
-    listen(serverSocket, 10);
-
-    while (1) {
-        // Accept connection
-        clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &addrSize);
-
-        // Create a new thread to handle the client
-        int* newClient = malloc(sizeof(int));
-        *newClient = clientSocket;
-        pthread_create(&thread, NULL, Handler_Client, (void*)newClient);
-    }
-
-    // Part 2
-    int analysisInterval = 5; // Example: Run analysis every 5 seconds
-
-    pthread_t analysisThread1, analysisThread2;
-
-    // Create analysis threads
-    pthread_create(&analysisThread1, NULL, analyse_Thread, (void*)&analysisInterval);
-    pthread_create(&analysisThread2, NULL, analyse_Thread, (void*)&analysisInterval);
-    pthread_join(analysisThread1, NULL);
-    pthread_join(analysisThread2, NULL);
-
-    return 0;
 }
