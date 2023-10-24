@@ -203,8 +203,8 @@ int main(int argc, char* argv[]) {
     socklen_t temp_len = sizeof(temp_addr);
     getsockname(server_fd, (struct sockaddr*)&temp_addr, &temp_len);
 
-    int assigned_port = ntohs(temp_addr.sin_port);
-    printf("Server listening on dynamically assigned port: %d\n", assigned_port);
+    // int assigned_port = ntohs(temp_addr.sin_port);
+    // printf("Server listening on dynamically assigned port: %d\n", assigned_port);
 /*
     if (listen(server_fd, MAX_CLIENTS) == -1) {
         perror("Listen failed");
