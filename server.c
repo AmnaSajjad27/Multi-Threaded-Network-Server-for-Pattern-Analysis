@@ -33,7 +33,7 @@ void add_book_node(char* title, char* content, int client_id) {
     // dynamic allocation
     new_node->content = (char*)malloc(strlen(content) + 1);
     strcpy(new_node->content, content);
-    
+
     new_node->next = NULL;
     new_node->book_next = NULL;
 
@@ -192,13 +192,13 @@ int main(int argc, char* argv[]) {
 
     int assigned_port = ntohs(temp_addr.sin_port);
     printf("Server listening on dynamically assigned port: %d\n", assigned_port);
-
+/*
     if (listen(server_fd, MAX_CLIENTS) == -1) {
         perror("Listen failed");
         close(server_fd);
         exit(EXIT_FAILURE);
     }
-/**/
+*/
     // Initialize book_heads array
     for (int i = 0; i < MAX_CLIENTS; i++) {
         book_heads[i] = NULL;
