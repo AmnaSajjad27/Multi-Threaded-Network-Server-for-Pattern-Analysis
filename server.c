@@ -32,6 +32,7 @@ void add_book_node(char* title, char* content, int client_id) {
     new_node->content = (char*)malloc(strlen(content) + 1);
     strcpy(new_node->content, content);
     new_node->next = NULL;
+    new_node->book_next = NULL;
 
     if (shared_list == NULL) {
         shared_list = new_node;
@@ -47,10 +48,10 @@ void add_book_node(char* title, char* content, int client_id) {
         book_heads[client_id] = new_node;
     } else {
         struct BookNode* current = book_heads[client_id];
-        while (current->next != NULL) {
-            current = current->next;
+        while (current->book_next != NULL) {
+            current = current->book_next;
         }
-        current->next = new_node;
+        current->book_next = new_node;
     }
     printf("Added node for client %d: %s\n", client_id, title);
 
