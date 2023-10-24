@@ -156,16 +156,17 @@ int main(int argc, char* argv[]) {
         printf("Usage: %s -l <port> -p <search_pattern>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-    
+
     /*
+
     if (argc != 5 || strcmp(argv[1], "-l") != 0 || strcmp(argv[3], "-p") != 0) {
         printf("Usage: %s -l <port> -p <search_pattern>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-    */
     int listen_port = atoi(argv[2]);
     search_pattern = argv[4];
 
+    */
 
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
@@ -197,7 +198,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("Server listening on port %d...\n", listen_port);
-/**/
+
     struct sockaddr_in temp_addr;
     socklen_t temp_len = sizeof(temp_addr);
     getsockname(server_fd, (struct sockaddr*)&temp_addr, &temp_len);
