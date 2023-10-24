@@ -15,6 +15,7 @@ struct BookNode {
     // changed this array to a pointer for dynamic allocation
     char* content;
     struct BookNode* next;
+    struct BookNode* book_next;
 };
 
 // Shared data structure (list) with book pointers
@@ -28,9 +29,11 @@ char* search_pattern = NULL;
 void add_book_node(char* title, char* content, int client_id) {
     struct BookNode* new_node = (struct BookNode*)malloc(sizeof(struct BookNode));
     strcpy(new_node->title, title);
+
     // dynamic allocation
     new_node->content = (char*)malloc(strlen(content) + 1);
     strcpy(new_node->content, content);
+    
     new_node->next = NULL;
     new_node->book_next = NULL;
 
