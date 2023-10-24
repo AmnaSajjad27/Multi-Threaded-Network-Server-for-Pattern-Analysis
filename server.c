@@ -87,7 +87,7 @@ void* handle_client(void* arg) {
     int client_id = *((int*)arg);
     free(arg);
 
-    client_count++;
+    client_count = client_count + 1;
 
     // Add a book header for this client
     book_heads[client_id] = NULL;
