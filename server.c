@@ -203,9 +203,7 @@ int main(int argc, char* argv[])
     {
         listen_port = atoi(argv[2]);
         search_pattern = argv[4];
-    }
-    else
-    {
+    } else {
         printf("Usage: %s -l <port> -p <search_pattern>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
