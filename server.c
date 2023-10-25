@@ -65,7 +65,7 @@ void print_book(int client_id, int connection_order) {
     struct BookNode* current = book_heads[client_id];
     FILE* file;
     char filename[50];
-    sprintf(filename, "book_%02d.txt", connection_order -1);  // Use %02d for leading zeros
+    sprintf(filename, "book_%02d.txt", connection_order);  // Use %02d for leading zeros
 
     if ((file = fopen(filename, "w")) == NULL) {
         perror("Error opening file");
@@ -79,7 +79,7 @@ void print_book(int client_id, int connection_order) {
 
     fclose(file);
 
-    printf("Wrote book for client %02d to %s\n", client_id -1 , filename);
+    printf("Wrote book for client %02d to %s\n", client_id , filename);
 }
 
 // Function to handle each client connection
