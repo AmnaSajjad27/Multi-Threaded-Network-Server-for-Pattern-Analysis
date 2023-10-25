@@ -192,23 +192,29 @@ void* analyze(void* arg)
     return NULL;
 }
 
-int main(int argc, char* argv[]) 
-{
+int main(int argc, char* argv[]) {
 
     // default port
     int listen_port = 12345;
-    
-    // If a port is given i.e. ther are 5 args including the flags -l and -p
-    if (argc == 5 && strcmp(argv[1], "-l") == 0 && strcmp(argv[3], "-p") == 0)
-    {
+
+        if (argc == 5 && strcmp(argv[1], "-l") == 0 && strcmp(argv[3], "-p") == 0) {
         listen_port = atoi(argv[2]);
         search_pattern = argv[4];
-    }
-    else
-    {
+    } else {
         printf("Usage: %s -l <port> -p <search_pattern>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+
+    /*
+
+    if (argc != 5 || strcmp(argv[1], "-l") != 0 || strcmp(argv[3], "-p") != 0) {
+        printf("Usage: %s -l <port> -p <search_pattern>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    int listen_port = atoi(argv[2]);
+    search_pattern = argv[4];
+
+    */
 
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
@@ -216,8 +222,7 @@ int main(int argc, char* argv[])
 
     // Create socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd == -1) 
-    {
+    if (server_fd == -1) {
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
@@ -227,16 +232,14 @@ int main(int argc, char* argv[])
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // Bind socket
-    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) 
-    {
+    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
         perror("Bind failed");
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
     // Listen for incoming connections
-    if (listen(server_fd, MAX_CLIENTS) == -1) 
-    {
+    if (listen(server_fd, MAX_CLIENTS) == -1) {
         perror("Listen failed");
         close(server_fd);
         exit(EXIT_FAILURE);
@@ -250,27 +253,29 @@ int main(int argc, char* argv[])
 
     // int assigned_port = ntohs(temp_addr.sin_port);
     // printf("Server listening on dynamically assigned port: %d\n", assigned_port);
-
+/*
+    if (listen(server_fd, MAX_CLIENTS) == -1) {
+        perror("Listen failed");
+        close(server_fd);
+        exit(EXIT_FAILURE);
+    }
+*/
     // Initialize book_heads array
-    for (int i = 0; i < MAX_CLIENTS; i++) 
-    {
+    for (int i = 0; i < MAX_CLIENTS; i++) {
         book_heads[i] = NULL;
     }
 
     // Initialize mutex
-    if (pthread_mutex_init(&mutex, NULL) != 0) 
-    {
+    if (pthread_mutex_init(&mutex, NULL) != 0) {
         perror("Mutex initialization failed");
         exit(EXIT_FAILURE);
     }
 
     pthread_t client_thread;
 
-    while (1) 
-    {
+    while (1) {
         client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
-        if (client_fd == -1) 
-        {
+        if (client_fd == -1) {
             perror("Accept failed");
             continue;
         }
@@ -279,8 +284,7 @@ int main(int argc, char* argv[])
         int* client_id = malloc(sizeof(int));
         *client_id = get_client_id();
 
-        if (pthread_create(&client_thread, NULL, handle_client, (void*)client_id) != 0) 
-        {
+        if (pthread_create(&client_thread, NULL, handle_client, (void*)client_id) != 0) {
             perror("Thread creation failed");
             close(client_fd);
             free(client_id);
