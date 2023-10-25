@@ -10,7 +10,8 @@
 #define MAX_CLIENTS 100
 
 // Define book data structure
-struct BookNode {
+struct BookNode 
+{
     char title[200];
     // changed this array to a pointer for dynamic allocation
     char* content;
@@ -23,10 +24,13 @@ struct BookNode* shared_list = NULL;
 struct BookNode* book_heads[MAX_CLIENTS];
 int client_count = 0;
 
+// Define and initalise search pattern 
 char* search_pattern = NULL;
 
+// initalise mutex for locks
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// global varibale to count file names 
 int client_id_counter = 0;
 
 int get_client_id()
@@ -38,7 +42,8 @@ int get_client_id()
 }
 
 // Function to add a book node to the shared list
-void add_book_node(char* title, char* content, int client_id) {
+void add_book_node(char* title, char* content, int client_id) 
+{
     struct BookNode* new_node = (struct BookNode*)malloc(sizeof(struct BookNode));
     strcpy(new_node->title, title);
 
@@ -49,21 +54,31 @@ void add_book_node(char* title, char* content, int client_id) {
     new_node->next = NULL;
     new_node->book_next = NULL;
 
-    if (shared_list == NULL) {
+    if (shared_list == NULL) 
+    {
         shared_list = new_node;
-    } else {
+    }
+    else
+    {
         struct BookNode* current = shared_list;
-        while (current->next != NULL) {
+
+        while (current->next != NULL) 
+        {
             current = current->next;
         }
         current->next = new_node;
     }
 
-    if (book_heads[client_id] == NULL) {
+    if (book_heads[client_id] == NULL) 
+    {
         book_heads[client_id] = new_node;
-    } else {
+    }
+    else
+    {
         struct BookNode* current = book_heads[client_id];
-        while (current->book_next != NULL) {
+
+        while (current->book_next != NULL)
+        {
             current = current->book_next;
         }
         current->book_next = new_node;
@@ -73,18 +88,23 @@ void add_book_node(char* title, char* content, int client_id) {
 }
 
 // Function to print a book
-void print_book(int client_id, int connection_order) {
+void print_book(int client_id, int connection_order)
+{
     struct BookNode* current = book_heads[client_id];
     FILE* file;
     char filename[50];
+
+    // -1 to start printing from 00 not 01 as its incremented later
     sprintf(filename, "book_%02d.txt", connection_order - 1);  // Use %02d for leading zeros
 
-    if ((file = fopen(filename, "w")) == NULL) {
+    if ((file = fopen(filename, "w")) == NULL) 
+    {
         perror("Error opening file");
         return;
     }
 
-    while (current != NULL) {
+    while (current != NULL) 
+    {
         fprintf(file, "%s\n%s\n", current->title, current->content);
         current = current->next;
     }
@@ -95,7 +115,8 @@ void print_book(int client_id, int connection_order) {
 }
 
 // Function to handle each client connection
-void* handle_client(void* arg) {
+void* handle_client(void* arg) 
+{
     int client_id = *((int*)arg);
     free(arg);
 
@@ -107,17 +128,19 @@ void* handle_client(void* arg) {
     char buffer[1100];
     memset(buffer, 0, sizeof(buffer));
 
-    while (1) {
+    while (1) 
+    {
         int bytes_received = recv(client_id, buffer, sizeof(buffer), 0);
-        if (bytes_received <= 0) {
+        if (bytes_received <= 0)
+        {
             break;
         }
 
-        // Extract book title and content from the received data
+        // get book title and content from the received data
         char title[100], content[1000];
         sscanf(buffer, "%99[^\n]\n%999[^\n]", title, content);
 
-        // Lock the thread
+        // Lock the thread, then add the book
         pthread_mutex_lock(&mutex);
         add_book_node(title, content, client_id);
         pthread_mutex_unlock(&mutex);
@@ -133,7 +156,8 @@ void* handle_client(void* arg) {
     close(client_id);
     client_count--;
 
-    if (client_count == 0){
+    if (client_count == 0)
+    {
         pthread_mutex_lock(&mutex);
         pthread_mutex_unlock(&mutex);
     }
@@ -141,50 +165,50 @@ void* handle_client(void* arg) {
     return NULL;
 }
 
-void* analyze(void* arg) {
-    while (1) {
-        sleep(5); // Adjust the interval as needed (5 seconds in this example)
+//  Function to analyse given a string arg
+void* analyze(void* arg) 
+{
+    while (1) 
+    {
+        sleep(5); // interval
 
-        // Count occurrences of search_pattern
+        // Count occurrences of the given search_pattern
         int pattern_count = 0;
         struct BookNode* current = shared_list;
-        while (current != NULL) {
-            if (strstr(current->content, search_pattern) != NULL) {
+
+        while (current != NULL) 
+        {
+            if (strstr(current->content, search_pattern) != NULL) 
+            {
                 pattern_count++;
             }
             current = current->next;
         }
 
-        // Print result
+        // Print occurences 
         printf("Occurrences of '%s': %d\n", search_pattern, pattern_count);
     }
 
     return NULL;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) 
+{
 
     // default port
     int listen_port = 12345;
-
-        if (argc == 5 && strcmp(argv[1], "-l") == 0 && strcmp(argv[3], "-p") == 0) {
+    
+    // If a port is given i.e. ther are 5 args including the flags -l and -p
+    if (argc == 5 && strcmp(argv[1], "-l") == 0 && strcmp(argv[3], "-p") == 0)
+    {
         listen_port = atoi(argv[2]);
         search_pattern = argv[4];
-    } else {
+    }
+    else
+    {
         printf("Usage: %s -l <port> -p <search_pattern>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-
-    /*
-
-    if (argc != 5 || strcmp(argv[1], "-l") != 0 || strcmp(argv[3], "-p") != 0) {
-        printf("Usage: %s -l <port> -p <search_pattern>\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-    int listen_port = atoi(argv[2]);
-    search_pattern = argv[4];
-
-    */
 
     int server_fd, client_fd;
     struct sockaddr_in server_addr, client_addr;
@@ -192,7 +216,8 @@ int main(int argc, char* argv[]) {
 
     // Create socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd == -1) {
+    if (server_fd == -1) 
+    {
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
@@ -202,14 +227,16 @@ int main(int argc, char* argv[]) {
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // Bind socket
-    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+    if (bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) 
+    {
         perror("Bind failed");
         close(server_fd);
         exit(EXIT_FAILURE);
     }
 
     // Listen for incoming connections
-    if (listen(server_fd, MAX_CLIENTS) == -1) {
+    if (listen(server_fd, MAX_CLIENTS) == -1) 
+    {
         perror("Listen failed");
         close(server_fd);
         exit(EXIT_FAILURE);
@@ -223,29 +250,27 @@ int main(int argc, char* argv[]) {
 
     // int assigned_port = ntohs(temp_addr.sin_port);
     // printf("Server listening on dynamically assigned port: %d\n", assigned_port);
-/*
-    if (listen(server_fd, MAX_CLIENTS) == -1) {
-        perror("Listen failed");
-        close(server_fd);
-        exit(EXIT_FAILURE);
-    }
-*/
+
     // Initialize book_heads array
-    for (int i = 0; i < MAX_CLIENTS; i++) {
+    for (int i = 0; i < MAX_CLIENTS; i++) 
+    {
         book_heads[i] = NULL;
     }
 
     // Initialize mutex
-    if (pthread_mutex_init(&mutex, NULL) != 0) {
+    if (pthread_mutex_init(&mutex, NULL) != 0) 
+    {
         perror("Mutex initialization failed");
         exit(EXIT_FAILURE);
     }
 
     pthread_t client_thread;
 
-    while (1) {
+    while (1) 
+    {
         client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
-        if (client_fd == -1) {
+        if (client_fd == -1) 
+        {
             perror("Accept failed");
             continue;
         }
@@ -254,7 +279,8 @@ int main(int argc, char* argv[]) {
         int* client_id = malloc(sizeof(int));
         *client_id = get_client_id();
 
-        if (pthread_create(&client_thread, NULL, handle_client, (void*)client_id) != 0) {
+        if (pthread_create(&client_thread, NULL, handle_client, (void*)client_id) != 0) 
+        {
             perror("Thread creation failed");
             close(client_fd);
             free(client_id);
