@@ -25,6 +25,18 @@ int client_count = 0;
 
 char* search_pattern = NULL;
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int client_id_counter = 0;
+
+int get_client_id()
+{
+    pthread_mutex_lock(&mutex);
+    int id = client_id_counter++;
+    pthread_mutex_unlock(&mutex);
+    return id;
+}
+
 // Function to add a book node to the shared list
 void add_book_node(char* title, char* content, int client_id) {
     struct BookNode* new_node = (struct BookNode*)malloc(sizeof(struct BookNode));
@@ -65,7 +77,7 @@ void print_book(int client_id, int connection_order) {
     struct BookNode* current = book_heads[client_id];
     FILE* file;
     char filename[50];
-    sprintf(filename, "book_%02d.txt", connection_order);  // Use %02d for leading zeros
+    sprintf(filename, "book_%02d.txt", connection_order - 1);  // Use %02d for leading zeros
 
     if ((file = fopen(filename, "w")) == NULL) {
         perror("Error opening file");
@@ -105,6 +117,11 @@ void* handle_client(void* arg) {
         char title[100], content[1000];
         sscanf(buffer, "%99[^\n]\n%999[^\n]", title, content);
 
+        // Lock the thread
+        pthread_mutex_lock(&mutex);
+        add_book_node(title, content, client_id);
+        pthread_mutex_unlock(&mutex);
+
         add_book_node(title, content, client_id);
 
         memset(buffer, 0, sizeof(buffer));
@@ -117,7 +134,8 @@ void* handle_client(void* arg) {
     client_count--;
 
     if (client_count == 0){
-        exit(0);
+        pthread_mutex_lock(&mutex);
+        pthread_mutex_unlock(&mutex);
     }
 
     return NULL;
@@ -217,6 +235,14 @@ int main(int argc, char* argv[]) {
         book_heads[i] = NULL;
     }
 
+    // Initialize mutex
+    if (pthread_mutex_init(&mutex, NULL) != 0) {
+        perror("Mutex initialization failed");
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_t client_thread;
+
     while (1) {
         client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
         if (client_fd == -1) {
@@ -225,9 +251,8 @@ int main(int argc, char* argv[]) {
         }
 
         // Create a thread to handle the client
-        pthread_t client_thread;
         int* client_id = malloc(sizeof(int));
-        *client_id = client_fd;
+        *client_id = get_client_id();
 
         if (pthread_create(&client_thread, NULL, handle_client, (void*)client_id) != 0) {
             perror("Thread creation failed");
@@ -240,15 +265,13 @@ int main(int argc, char* argv[]) {
     }
 
     // Create analysis threads
+    pthread_mutex_destroy(&mutex);
+
+    /*
     pthread_t analysis_thread1, analysis_thread2;
     pthread_create(&analysis_thread1, NULL, analyze, NULL);
     pthread_create(&analysis_thread2, NULL, analyze, NULL);
-
-   
-    while (1) {
-        client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
-    }
-
+    */
     close(server_fd);
     return 0;
 }
