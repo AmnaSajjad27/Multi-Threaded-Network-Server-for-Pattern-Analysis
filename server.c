@@ -272,6 +272,11 @@ int main(int argc, char* argv[]) {
     pthread_create(&analysis_thread1, NULL, analyze, NULL);
     pthread_create(&analysis_thread2, NULL, analyze, NULL);
     */
+   
+    while (1) {
+        client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
+    }
+
     close(server_fd);
     return 0;
 }
