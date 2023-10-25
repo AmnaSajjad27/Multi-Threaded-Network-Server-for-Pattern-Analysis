@@ -199,8 +199,7 @@ int main(int argc, char* argv[])
     // default port
     int listen_port = 12345;
 
-    if (argc == 5 && strcmp(argv[1], "-l") == 0 && strcmp(argv[3], "-p") == 0) 
-    {
+        if (argc == 5 && strcmp(argv[1], "-l") == 0 && strcmp(argv[3], "-p") == 0) {
         listen_port = atoi(argv[2]);
         search_pattern = argv[4];
     } else {
