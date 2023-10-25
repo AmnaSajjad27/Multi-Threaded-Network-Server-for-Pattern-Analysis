@@ -38,11 +38,12 @@ Now, send the book data using the following command. Make sure you have saved th
 nc <server_ip> <port> < <file_name>
 
 6. Repeat for Multiple Books
+nc <server_ip> < <file_name>
 
+Repeat for Multiple Books
 If you have more books to send, repeat step 5 for each additional book.
 
-7. Finishing Book Transfer
-
+Finishing Book Transfer
 Once you have sent all the books, press Ctrl + D in the Netcat terminal.
 
 The server program will then start analyzing the input and search for occurrences of your desired string.
