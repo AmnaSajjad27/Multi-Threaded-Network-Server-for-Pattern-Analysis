@@ -267,12 +267,6 @@ int main(int argc, char* argv[]) {
     // Create analysis threads
     pthread_mutex_destroy(&mutex);
 
-    
-    pthread_t analysis_thread1, analysis_thread2;
-    pthread_create(&analysis_thread1, NULL, analyze, NULL);
-    pthread_create(&analysis_thread2, NULL, analyze, NULL);
-    
-
     close(server_fd);
     return 0;
 }
