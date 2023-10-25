@@ -79,7 +79,7 @@ void print_book(int client_id, int connection_order) {
 
     fclose(file);
 
-    printf("Wrote book for client %02d to %s\n", client_id, filename);
+    printf("Wrote book for client %02d to %s\n", client_id -1 , filename);
 }
 
 // Function to handle each client connection
