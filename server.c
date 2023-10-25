@@ -192,9 +192,7 @@ void* analyze(void* arg)
     return NULL;
 }
 
-
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 
     // default port
     int listen_port = 12345;
